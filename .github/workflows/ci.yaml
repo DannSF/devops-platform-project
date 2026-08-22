@@ -11,9 +11,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Verify repository
+      - name: Build Docker image
         run: |
-          echo "Repository downloaded succesfully"
-          ls -la
+          docker build \
+            -f docker/Dockerfile \
+            -t devops-platform-app:${{ github.sha }} \
+            .
