@@ -23,6 +23,13 @@ spec:
         - name: app
           image: 779686178234.dkr.ecr.ap-southeast-2.amazonaws.com/devops-platform-app:1.0
 
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: devops-platform-config
+                  key: PORT
+
           ports:
             - containerPort: 3000
 
