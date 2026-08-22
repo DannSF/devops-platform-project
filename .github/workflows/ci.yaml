@@ -33,7 +33,20 @@ jobs:
           docker build \
             -f docker/Dockerfile \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} \
-            .
+      
+      - name: Run Docker container
+        run: |
+          docker run -d \
+            --name devops-platform-app \
+            -p 3000:3000 \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} \
+      
+      - name: Test application
+        run: |
+          sleep 3
+          curl --fail http://localhost:3000
+          curl --fail http://localhost:3000/health
+
       - name: Push Docker image to ECR
         run: |
           docker push \
