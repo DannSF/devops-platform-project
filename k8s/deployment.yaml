@@ -16,12 +16,9 @@ spec:
         app: devops-platform-app
 
     spec:
-      imagePullSecrets:
-        - name: ecr-registry-secret
-
       containers:
         - name: app
-          image: 779686178234.dkr.ecr.ap-southeast-2.amazonaws.com/devops-platform-app:1.0
+          image: 779686178234.dkr.ecr.ap-southeast-2.amazonaws.com/devops-platform-app:86a0879907b473f07d08a85605e7cc9394ed0451
 
           env:
             - name: PORT
