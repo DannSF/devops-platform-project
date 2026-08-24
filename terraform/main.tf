@@ -221,7 +221,18 @@ resource "aws_iam_role_policy_attachment" "github_ecr_power_user" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
-resource "aws_iam_role_policy_attachment" "github_eks_cluster_policy" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+resource "aws_iam_role_policy" "github_eks_access" {
+  name = "${var.project_name}-github-eks-access"
+  role = aws_iam_role.github_actions.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = {
+      Effect = "Allow"
+      Action = [
+        "eks:DescribeCluster"
+      ]
+      resource = aws_eks_cluster.main.arn
+    }
+  })
 }
