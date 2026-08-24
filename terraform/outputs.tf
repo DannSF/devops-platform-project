@@ -25,3 +25,8 @@ output "eks_node_group_name" {
   description = "Name of the EKS managed node group"
   value       = aws_eks_node_group.main.node_group_name
 }
+
+output "github_actions_role_arn" {
+  description = "IAM role ARN ised by GitHub Actions through OIDC"
+  value       = aws_iam_role.github_actions.arn
+}
