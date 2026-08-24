@@ -232,7 +232,7 @@ resource "aws_iam_role_policy" "github_eks_access" {
       Action = [
         "eks:DescribeCluster"
       ]
-      resource = aws_eks_cluster.main.arn
+      Resource = aws_eks_cluster.main.arn
     }
   })
 }
