@@ -71,9 +71,11 @@ jobs:
       - name: Deploy new image to EKS
         run: |
           kubectl set image deployment/devops-platform-app \
-            app=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
+            app=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} \
+            --namespace devops-platform
 
       - name: Wait for rollout
         run: |
           kubectl rollout status deployment/devops-platform-app \
+            --namespace devops-platform \
             --timeout=120s
