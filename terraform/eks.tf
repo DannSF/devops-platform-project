@@ -8,10 +8,7 @@ resource "aws_eks_cluster" "main" {
   }
 
   vpc_config {
-    subnet_ids = [
-      aws_subnet.public_a.id,
-      aws_subnet.public_b.id
-    ]
+    subnet_ids = module.network.public_subnet_ids
   }
 
   depends_on = [
@@ -28,10 +25,7 @@ resource "aws_eks_node_group" "main" {
   node_group_name = "${var.project_name}-nodes"
   node_role_arn   = aws_iam_role.eks_nodes.arn
 
-  subnet_ids = [
-    aws_subnet.public_a.id,
-    aws_subnet.public_b.id
-  ]
+  subnet_ids = module.network.public_subnet_ids
 
   instance_types = [var.node_instance_type]
 
