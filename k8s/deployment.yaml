@@ -3,6 +3,7 @@ kind: Deployment
 
 metadata:
   name: devops-platform-app
+  namespace: devops-platform
 
 spec:
   replicas: 2

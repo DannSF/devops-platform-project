@@ -22,5 +22,5 @@ module "github_oidc" {
   cluster_name        = module.eks.cluster_name
   cluster_arn         = module.eks.cluster_arn
   github_oidc_subject = var.github_oidc_subject
-  eks_namespace       = "default"
+  eks_namespace       = "devops-platform"
 }

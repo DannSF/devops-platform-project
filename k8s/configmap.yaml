@@ -3,6 +3,7 @@ kind: ConfigMap
 
 metadata:
   name: devops-platform-config
+  namespace: devops-platform
 
 data:
   PORT: "3000"

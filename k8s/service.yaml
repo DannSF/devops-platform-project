@@ -3,6 +3,7 @@ kind: Service
 
 metadata:
   name: devops-platform-app
+  namespace: devops-platform
 
 spec:
   selector:
