@@ -1,11 +1,11 @@
-variable "aws_region" {
-  description = "AWS region used by the project"
-  type        = string
-}
-
 variable "project_name" {
   description = "Name used to identify project resources"
   type        = string
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs used by the EKS cluster and node group"
+  type        = list(string)
 }
 
 variable "node_instance_type" {
@@ -17,17 +17,14 @@ variable "node_instance_type" {
 variable "node_desired_size" {
   description = "Desired number of EKS worker nodes"
   type        = number
-  default     = 1
 }
 
 variable "node_min_size" {
   description = "Minimum number of EKS worker nodes"
   type        = number
-  default     = 1
 }
 
 variable "node_max_size" {
   description = "Maximum number of EKS worker nodes"
   type        = number
-  default     = 2
 }
