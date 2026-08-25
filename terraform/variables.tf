@@ -31,3 +31,8 @@ variable "node_max_size" {
   type        = number
   default     = 2
 }
+
+variable "github_oidc_subject" {
+  description = "GitHub OIDC subject allowed to assume the AWS role"
+  type        = string
+}

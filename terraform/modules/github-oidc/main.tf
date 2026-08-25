@@ -23,7 +23,7 @@ resource "aws_iam_role" "github_actions" {
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:DannSF@106612864/devops-platform-project@1341248413:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = var.github_oidc_subject
           }
         }
       }
@@ -51,26 +51,26 @@ resource "aws_iam_role_policy" "github_eks_access" {
       Action = [
         "eks:DescribeCluster"
       ]
-      Resource = module.eks.cluster_arn
+      Resource = var.cluster_arn
     }
   })
 }
 
 resource "aws_eks_access_entry" "github_actions" {
-  cluster_name  = module.eks.cluster_name
+  cluster_name  = var.cluster_name
   principal_arn = aws_iam_role.github_actions.arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "github_actions" {
-  cluster_name  = module.eks.cluster_name
+  cluster_name  = var.cluster_arn
   principal_arn = aws_iam_role.github_actions.arn
 
   policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
 
   access_scope {
     type       = "namespace"
-    namespaces = ["default"]
+    namespaces = [var.eks_namespace]
   }
 
   depends_on = [
