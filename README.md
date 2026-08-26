@@ -36,33 +36,37 @@ destroyed when needed.
 devops-platform-project/
 ├── .github/
 │   └── workflows/
-│       └── ci.yaml              # CI/CD pipeline
+│       └── ci.yaml                     # CI/CD pipeline
 │
 ├── app/
-│   ├── server.js                # Node.js application
-│   ├── package.json             # Application dependencies and scripts
-│   └── pnpm-lock.yaml           # Dependency lock file
+│   ├── server.js                       # Node.js application
+│   ├── package.json                    # Application dependencies
+│   └── pnpm-lock.yaml                  # Dependency lock file
 │
 ├── docker/
-│   └── Dockerfile                # Application container image
+│   └── Dockerfile                      # Application container image
 │
 ├── k8s/
-│   ├── configmap.yaml            # Application configuration
-│   ├── deployment.yaml          # Kubernetes Deployment
-│   ├── service.yaml             # Application Service
-│   └── ingress.yaml             # Ingress configuration
+│   ├── namespace.yaml                  # Application namespace
+│   ├── configmap.yaml                  # Application configuration
+│   ├── deployment.yaml                 # Kubernetes Deployment
+│   └── service.yaml                    # LoadBalancer Service
 │
 ├── terraform/
-│   ├── main.tf                  # AWS infrastructure resources
-│   ├── provider.tf              # AWS provider configuration
-│   ├── variables.tf             # Terraform input variables
-│   ├── terraform.tfvars         # Environment-specific values
-│   ├── outputs.tf               # Infrastructure outputs
-│   ├── versions.tf              # Terraform/provider requirements
-│   └── .terraform.lock.hcl      # Provider dependency lock
+│   ├── modules/
+│   │   ├── network/                    # VPC and networking
+│   │   ├── eks/                        # EKS cluster and node group
+│   │   └── github-oidc/                # GitHub Actions AWS authentication
+│   ├── main.tf                         # Root module
+│   ├── provider.tf                     # AWS provider
+│   ├── variables.tf                    # Input variables
+│   ├── terraform.tfvars                # Environment values
+│   ├── outputs.tf                      # Infrastructure outputs
+│   ├── versions.tf                     # Terraform/provider requirements
+│   └── .terraform.lock.hcl             # Provider dependency lock
 │
 ├── docs/
-│   └── architecture.md          # Architecture documentation
+│   └── architecture.md
 │
 ├── .dockerignore
 ├── .gitignore
@@ -74,20 +78,37 @@ devops-platform-project/
 The CI/CD pipeline is implemented with GitHub Actions and runs automatically
 when changes are pushed to the `main` branch.
 
-The pipeline performs the following steps:
+Two validation paths run before deployment:
 
-1. Checks out the repository.
-2. Authenticates with AWS.
-3. Authenticates Docker with Amazon ECR.
-4. Builds the application Docker image.
-5. Starts the container inside the GitHub Actions runner.
-6. Tests the `/` and `/health` endpoints.
-7. Pushes the image to Amazon ECR using the Git commit SHA as the image tag.
-8. Updates the kubeconfig for the EKS cluster.
-9. Updates the Kubernetes Deployment with the new image.
-10. Waits for the Kubernetes rolling update to complete.
+### Terraform Validation
 
-If the application tests fail, the image is not deployed.
+- Checks Terraform formatting.
+- Initializes Terraform without configuring a backend.
+- Validates the Terraform configuration.
+
+### Application Build and Test
+
+- Builds the Docker image.
+- Runs the application container.
+- Tests the `/` and `/health` endpoints.
+- Pushes the validated image to Amazon ECR using the Git commit SHA as its tag.
+
+The deployment job runs only after both validation jobs succeed.
+
+### Deployment
+
+GitHub Actions authenticates to AWS using OpenID Connect (OIDC), without
+storing long-lived AWS access keys.
+
+The deployment job:
+
+1. Authenticates to AWS.
+2. Configures access to the EKS cluster.
+3. Updates the Kubernetes Deployment with the new image.
+4. Waits for the Kubernetes rollout to complete.
+
+GitHub Actions has Kubernetes edit permissions limited to the
+`devops-platform` namespace.
 
 ## Infrastructure Deployment
 
@@ -126,6 +147,7 @@ The Kubernetes manifests are located in the `k8s/` directory.
 Apply the application configuration and workloads:
 
 ```bash
+kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
@@ -134,9 +156,9 @@ kubectl apply -f k8s/service.yaml
 Verify the deployment:
 
 ```bash
-kubectl get pods
-kubectl get deployments
-kubectl get services
+kubectl get pods -n devops-platform
+kubectl get deployments -n devops-platform
+kubectl get services -n devops-platform
 ```
 
 The `LoadBalancer` Service provisions an AWS load balancer that exposes the
@@ -145,7 +167,7 @@ application publicly.
 The application provides two endpoints:
 
 ```text
-GET /         -> Hello from DevOps Platform!
+GET /         -> Hello from DevOps Platform on EKS!
 GET /health   -> {"status":"Up"}
 ```
 
@@ -155,7 +177,7 @@ The Kubernetes LoadBalancer Service should be removed before destroying the
 AWS infrastructure:
 
 ```bash
-kubectl delete service devops-platform-app
+kubectl delete service devops-platform-app -n devops-platform
 ```
 
 Then destroy the Terraform-managed infrastructure:
@@ -176,10 +198,9 @@ A more detailed explanation of the architecture is available in
 
 ## Future Improvements
 
-- AWS authentication from GitHub Actions using OIDC
-- GitOps with Argo CD or Flux
+- Automated Kubernetes rollback strategy
+- GitOps deployment using Argo CD or Flux
 - HTTPS with a custom domain and AWS Certificate Manager
-- Kubernetes rollback testing
 - Prometheus and Grafana monitoring
 - Centralized logging
 - Terraform remote state

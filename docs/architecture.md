@@ -28,25 +28,34 @@ GitHub
     v
 GitHub Actions
     |
-    +--> Build Docker image
-    |
-    +--> Run container
-    |
-    +--> Test application
-    |
-    +--> Push image to Amazon ECR
-    |
-    +--> Authenticate to Amazon EKS
-    |
-    +--> Update Kubernetes Deployment
-    |
-    v
-Amazon EKS
+    +---------------------------+
+    |                           |
+    v                           v
+Terraform Validation       Build & Test
+    |                           |
+    |                     Push image
+    |                           |
+    |                           v
+    |                      Amazon ECR
+    |                           |
+    +-------------+-------------+
+                  |
+                  v
+               Deploy
+                  |
+                  v
+             Amazon EKS
 ```
 
-Each Docker image is tagged using the Git commit SHA. This provides a direct
-relationship between the source code commit and the container image deployed
-to Kubernetes.
+Each Docker image is tagged using the Git commit SHA, providing traceability
+between the source code commit, the image stored in Amazon ECR, and the
+version deployed to Kubernetes.
+
+GitHub Actions authenticates to AWS using OpenID Connect (OIDC). This avoids
+storing long-lived AWS access keys in the repository.
+
+Access to Kubernetes is restricted to the `devops-platform` namespace using
+an EKS access entry and namespace-scoped access policy.
 
 ## AWS Infrastructure
 
@@ -78,6 +87,12 @@ IAM roles and policies provide the EKS control plane and worker nodes with
 the permissions required to interact with AWS services.
 
 The worker node has permission to pull container images from Amazon ECR.
+
+The Terraform configuration is organized into reusable modules:
+
+- `network` - VPC, subnets, Internet Gateway, and routing
+- `eks` - EKS cluster, managed node group, and IAM roles
+- `github-oidc` - GitHub OIDC provider, IAM role, and EKS access configuration
 
 ## Kubernetes Architecture
 
@@ -170,6 +185,12 @@ The project currently supports:
 - AWS infrastructure provisioning using Terraform
 - Automated deployment to EKS using GitHub Actions
 - Infrastructure destruction and recreation using Terraform
+- Modular Terraform configuration
+- GitHub Actions authentication using AWS OIDC
+- Terraform validation in CI
+- Dedicated Kubernetes namespace
+- Namespace-scoped GitHub Actions permissions
+- Non-root application container
 
 ## Future Improvements
 
