@@ -4,9 +4,11 @@ WORKDIR /app
 
 COPY app/package.json app/pnpm-lock.yaml ./
 
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable && pnpm install --frozen-lockfile --prod
 
-COPY app/ .
+COPY --chown=node:node app/ .
+
+USER node
 
 EXPOSE 3000
 
