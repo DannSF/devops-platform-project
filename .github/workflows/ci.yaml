@@ -1,6 +1,6 @@
 name: CI Pipeline
 
-on: 
+on:
   push:
     branches:
       - main
@@ -9,16 +9,15 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+  EKS_CLUSTER: ${{ vars.EKS_CLUSTER }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-      EKS_CLUSTER: ${{ vars.EKS_CLUSTER }}
-      
 
     steps:
       - name: Checkout repository
@@ -30,10 +29,6 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS identity
-        run: |
-          aws sts get-caller-identity
-
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -43,14 +38,14 @@ jobs:
             -f docker/Dockerfile \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} \
             .
-      
+
       - name: Run Docker container
         run: |
           docker run -d \
             --name devops-platform-app \
             -p 3000:3000 \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} 
-      
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
+
       - name: Test application
         run: |
           sleep 3
@@ -61,13 +56,30 @@ jobs:
         run: |
           docker push \
             $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
-      
+
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        run: |
+          aws sts get-caller-identity
+
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
             --region $AWS_REGION \
             --name $EKS_CLUSTER
-      
+
       - name: Deploy new image to EKS
         run: |
           kubectl set image deployment/devops-platform-app \
