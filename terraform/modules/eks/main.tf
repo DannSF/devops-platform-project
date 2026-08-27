@@ -14,10 +14,6 @@ resource "aws_eks_cluster" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy
   ]
-
-  tags = {
-    Project = var.project_name
-  }
 }
 
 resource "aws_eks_node_group" "main" {
@@ -40,10 +36,6 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.eks_read_only
   ]
-
-  tags = {
-    Project = var.project_name
-  }
 }
 
 resource "aws_iam_role" "eks_cluster" {
@@ -63,9 +55,6 @@ resource "aws_iam_role" "eks_cluster" {
       }
     ]
   })
-  tags = {
-    Project = var.project_name
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
@@ -88,10 +77,6 @@ resource "aws_iam_role" "eks_nodes" {
       }
     ]
   })
-
-  tags = {
-    Project = var.project_name
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {

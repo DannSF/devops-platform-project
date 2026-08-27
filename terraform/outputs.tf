@@ -24,6 +24,6 @@ output "eks_node_group_name" {
 }
 
 output "github_actions_role_arn" {
-  description = "IAM role ARN ised by GitHub Actions through OIDC"
+  description = "IAM role ARN used by GitHub Actions through OIDC"
   value       = module.github_oidc.role_arn
 }
